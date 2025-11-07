@@ -1,0 +1,122 @@
+See the ensuing practice questions:
+https://www.sql-practice.com/
+
+-------------------------------------------------
+Show first name of patients that start with the letter 'C'
+SELECT first_name from patients WHERE first_name LIKE 'C%'
+
+The LIKE operator in SQL is used for pattern matching in text data.
+It lets you search for strings that match a specific pattern.
+
+% (percent sign) - Matches any sequence of characters (including
+                   zero characters).
+_ (underscore) - Matches exactly one character.
+
+-------------------------------------------------
+Show unique birth years from patients and order them by ascending.
+
+SELECT DISTINCT YEAR(birth_date) AS birth from patients
+order by birth_date ASC
+
+The YEAR() function extracts just the year from a date value.
+
+-------------------------------------------------
+Show unique first names from the patients table which only occurs
+once in the list.
+
+For example, if two or more people are named 'John' in the
+first_name column then don't include their name in the output
+list. If only 1 person is named 'Leo' then include them in
+the output.
+
+SELECT first_name
+FROM patients
+GROUP BY first_name
+HAVING COUNT(first_name) = 1
+-------------------------------------------------
+Show patient_id and first_name from patients where their
+first_name start and ends with 's' and is at least 6
+characters long.
+
+SELECT
+  patient_id,
+  first_name
+FROM patients
+WHERE first_name LIKE 's____%s';
+
+-------------------------------------------------
+Display every patient's first_name.
+Order the list by the length of each name and then by
+alphabetically.
+
+SELECT first_name
+FROM patients
+order by
+  len(first_name),
+  first_name;
+
+The ORDER BY has two levels:
+First: Sort by LEN(first_name) - shortest names first.
+
+Second: Within names of the same length, sort alphabetically
+        by first_name.
+-------------------------------------------------
+Show the total amount of male patients and the total amount of
+female patients in the patients table.
+Display the two results in the same row.
+
+SELECT
+(SELECT COUNT(*) from patients WHERE gender = 'male') AS male_count,
+(SELECT COUNT(*) from patients WHERE gender = 'female') AS female_count;
+
+-------------------------------------------------
+Show first and last name, allergies from patients which have
+allergies to either 'Penicillin' or 'Morphine'. Show results
+ordered ascending by allergies then by first_name then by last_name.
+
+SELECT first_name, last_name, allergies from patients
+WHERE allergies = 'Penicillin' or allergies = 'Morphine'
+order by allergies,
+		     first_name,
+         last_name;
+
+-------------------------------------------------
+Show all of the patients grouped into weight groups.
+Show the total amount of patients in each weight group.
+Order the list by the weight group decending.
+
+For example, if they weight 100 to 109 they are placed in the
+100 weight group, 110-119 = 110 weight group, etc.
+
+SELECT
+  COUNT(*) AS patients_in_group,
+  FLOOR(weight / 10) * 10 AS weight_group
+FROM patients
+GROUP BY weight_group
+ORDER BY weight_group DESC
+
+COUNT(*) - Counts how many patients are in each weight group.
+AS weight_group - Labels the calculated column for readability.
+GROUP BY weight_group - Groups all patients with the same weight
+                        bucket together.
+ORDER BY weight_group DESC - Sorts from heaviest to lightest groups.
+
+-------------------------------------------------
+Show patient_id, weight, height, isObese from the patients table.
+
+Display isObese as a boolean 0 or 1.
+
+Obese is defined as weight(kg)/(height(m)2) >= 30.
+
+weight is in units kg.
+
+height is in units cm.
+
+SELECT patient_id, weight, height, 
+  (CASE 
+    WHEN weight/(POWER(height/100.0, 2)) >= 30 THEN
+      1
+    ELSE
+      0
+    END) AS isObese
+FROM patients
