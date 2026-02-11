@@ -1,0 +1,329 @@
+See the ensuing practice questions:
+https://www.sql-practice.com/
+
+Wildcard Characters:
+% Represents zero or more characters
+_ Represents a single character
+
+----------------------------------------------------------------
+Show first name of patients that start with the letter 'C'
+SELECT first_name from patients WHERE first_name LIKE 'C%'
+
+The LIKE operator in SQL is used for pattern matching in text data.
+It lets you search for strings that match a specific pattern.
+
+% (percent sign) - Matches any sequence of characters (including
+                   zero characters).
+_ (underscore) - Matches exactly one character.
+
+----------------------------------------------------------------
+Show unique birth years from patients and order them by ascending.
+
+SELECT DISTINCT YEAR(birth_date) AS birth from patients
+order by birth_date ASC
+
+The YEAR() function extracts just the year from a date value.
+
+----------------------------------------------------------------
+Show unique first names from the patients table which only occurs
+once in the list.
+
+For example, if two or more people are named 'John' in the
+first_name column then don't include their name in the output
+list. If only 1 person is named 'Leo' then include them in
+the output.
+
+SELECT first_name
+FROM patients
+GROUP BY first_name
+HAVING COUNT(first_name) = 1
+
+GROUP BY first_name -> groups all identical first names together.
+
+COUNT(*) -> counts how many times each first name appears.
+
+HAVING COUNT(*) = 1 -> keeps only the groups that appear exactly once.
+----------------------------------------------------------------
+Show patient_id and first_name from patients where their
+first_name start and ends with 's' and is at least 6
+characters long.
+
+SELECT
+  patient_id,
+  first_name
+FROM patients
+WHERE first_name LIKE 's____%s';
+
+% (percent sign) - Matches any sequence of characters (including
+                   zero characters).
+_ (underscore) - Matches exactly one character.
+
+----------------------------------------------------------------
+Show patient_id, first_name, last_name from patients whos
+diagnosis is 'Dementia'.
+
+Primary diagnosis is stored in the admissions table.
+
+SELECT p.patient_id, p.first_name, p.last_name
+FROM patients p
+JOIN admissions a ON a.patient_id = p.patient_id
+WHERE a.diagnosis = 'Dementia';
+
+----------------------------------------------------------------
+Display every patient's first_name.
+Order the list by the length of each name and then by
+alphabetically.
+
+SELECT first_name
+FROM patients
+order by
+  len(first_name),
+  first_name;
+
+The ORDER BY has two levels:
+First: Sort by LEN(first_name) - shortest names first.
+
+Second: Within names of the same length, sort alphabetically
+        by first_name.
+----------------------------------------------------------------
+Show the total amount of male patients and the total amount of
+female patients in the patients table.
+Display the two results in the same row.
+
+SELECT
+(SELECT COUNT(*) from patients WHERE gender = 'male') AS male_count,
+(SELECT COUNT(*) from patients WHERE gender = 'female') AS female_count;
+
+SELECT
+  SUM(CASE WHEN gender = 'male' THEN 1 ELSE 0 END) AS male_count,
+  SUM(CASE WHEN gender = 'female' THEN 1 ELSE 0 END) AS female_count
+FROM patients;
+
+----------------------------------------------------------------
+Show first and last name, allergies from patients which have
+allergies to either 'Penicillin' or 'Morphine'. Show results
+ordered ascending by allergies then by first_name then by last_name.
+
+SELECT first_name, last_name, allergies from patients
+WHERE allergies = 'Penicillin' or allergies = 'Morphine'
+order by allergies,
+		     first_name,
+         last_name;
+
+----------------------------------------------------------------
+Show all of the patients grouped into weight groups.
+Show the total amount of patients in each weight group.
+Order the list by the weight group decending.
+
+For example, if they weight 100 to 109 they are placed in the
+100 weight group, 110-119 = 110 weight group, etc.
+
+SELECT
+  COUNT(*) AS patients_in_group,
+  FLOOR(weight / 10) * 10 AS weight_group
+FROM patients
+GROUP BY weight_group
+ORDER BY weight_group DESC
+
+COUNT(*) - Counts how many patients are in each weight group.
+AS weight_group - Labels the calculated column for readability.
+GROUP BY weight_group - Groups all patients with the same weight
+                        bucket together.
+ORDER BY weight_group DESC - Sorts from heaviest to lightest groups.
+
+----------------------------------------------------------------
+Show patient_id, weight, height, isObese from the patients table.
+
+Display isObese as a boolean 0 or 1.
+
+Obese is defined as weight(kg)/(height(m)2) >= 30.
+
+weight is in units kg.
+
+height is in units cm.
+
+SELECT patient_id, weight, height, 
+  (CASE 
+    WHEN weight/(POWER(height/100.0, 2)) >= 30 THEN
+      1
+    ELSE
+      0
+    END) AS isObese
+FROM patients
+
+----------------------------------------------------------------
+Show patient_id, diagnosis from admissions.
+Find patients admitted multiple times for the same
+diagnosis.
+
+SELECT patient_id, diagnosis
+FROM admissions
+GROUP BY
+	patient_id,
+  diagnosis
+HAVING COUNT(*) > 1;
+
+GROUP BY patient_id, diagnosis:
+All rows that share the same patient ID and the same diagnosis
+will be grouped together.
+
+----------------------------------------------------------------
+Show the first name and last name of patients with a weight in the
+range of 100 to 120 (inclusive).
+
+SELECT first_name
+FROM admissions
+WHERE weight BETWEEN 100 AND 120;
+
+----------------------------------------------------------------
+Update the allergies column.
+Replace with "NKA" if null.
+
+UPDATE patients
+SET allergies = 'NKA'
+WHERE allergies IS NULL;
+
+----------------------------------------------------------------
+SELECT CONCAT(first_name, " ", last_name) AS full_name
+FROM patients;
+
+----------------------------------------------------------------
+SELECT COUNT(*) AS num_patients
+FROM patients
+WHERE YEAR(birth_date) = 2010;
+
+----------------------------------------------------------------
+We are looking for a specific patient.
+Pull all columns for the patient who matches the following criteria:
+- First_name contains an 'r' after the first two letters.
+- Identifies their gender as 'F'
+- Born in February, May, or December
+- Their weight would be between 60kg and 80kg
+- Their patient_id is an odd number
+- They are from the city 'Kingston'
+
+SELECT *
+FROM patients
+WHERE
+  first_name LIKE '__r%'
+  AND gender = 'F'
+  AND MONTH(birth_date) IN (2, 5, 12)
+  AND weight BETWEEN 60 AND 80
+  AND patient_id % 2 = 1
+  AND city = 'Kingston';
+
+----------------------------------------------------------------
+Show the percent of patients that have 'M' as their gender.
+Round the answer to the nearest hundreth number and in percent form.
+
+SELECT CONCAT(
+    ROUND(
+      (
+        SELECT COUNT(*)
+        FROM patients
+        WHERE gender = 'M'
+      ) / CAST(COUNT(*) as float),
+      4
+    ) * 100,
+    '%'
+  ) as percent_of_male_patients
+FROM patients;
+
+----------------------------------------------------------------
+Show all allergies ordered by popularity. Remove NULL values
+from query.
+
+SELECT
+  allergies,
+  COUNT(*) AS allergy_count
+FROM patients
+WHERE allergies IS NOT NULL
+GROUP BY allergies
+ORDER BY allergy_count DESC;
+
+----------------------------------------------------------------
+Sort the province names in ascending order in such a way
+that the province 'Ontario' is always on top.
+
+SELECT province_name
+FROM province_names
+ORDER BY 
+  CASE 
+    WHEN province_name = 'Ontario' THEN 0
+    ELSE 1
+  END,
+  province_name ASC;
+----------------------------------------------------------------
+Show the province_id(s), sum of height; where the total sum of
+its patient's height is greater than or equal to 7,000.
+
+SELECT
+  province_id,
+  SUM(height) AS sum_height
+FROM patients
+GROUP BY province_id
+HAVING sum_height >= 7000
+
+----------------------------------------------------------------
+Show the city, company_name, contact_name from the customers
+and suppliers table merged together.
+
+Create a column which contains 'customers' or 'suppliers'
+depending on the table it came from.
+
+select City, company_name, contact_name, 'customers' as relationship
+from customers
+
+union
+
+select city, company_name, contact_name, 'suppliers'
+from suppliers
+
+----------------------------------------------------------------
+Show the total amount of orders for each year/month.
+
+SELECT 
+    YEAR(order_date) AS order_year,
+    MONTH(order_date) AS order_month,
+    SUM(total_amount) AS total_orders
+FROM Orders
+GROUP BY YEAR(order_date), MONTH(order_date)
+ORDER BY order_year, order_month;
+
+----------------------------------------------------------------
+Show the employee's first_name and last_name, a "num_orders"
+column with a count of the orders taken, and a column called
+"Shipped" that displays "On Time" if the order shipped_date
+is less or equal to the required_date, "Late" if the order
+shipped late, "Not Shipped" if shipped_date is null.
+
+Order by employee last_name, then by first_name, and then
+descending by number of orders.
+
+SELECT e.first_name, e.last_name, COUNT(o.order_id) As num_orders,
+(
+  CASE
+    WHEN o.shipped_date <= o.required_date THEN 'On Time'
+    WHEN o.shipped_date > o.required_date THEN 'Late'
+    WHEN o.shipped_date is null THEN 'Not Shipped' END
+  ) AS shipped
+FROM orders o
+JOIN employees e ON e.employee_id = o.employee_id
+GROUP BY e.first_name, e.last_name, shipped
+ORDER BY e.last_name, e.first_name, num_orders DESC
+
+----------------------------------------------------------------
+Show how much money the company lost due to giving discounts each year,
+order the years from most recent to least recent.
+Round to 2 decimal places.
+
+Select 
+YEAR(o.order_date) AS 'order_year' , 
+ROUND(SUM(p.unit_price * od.quantity * od.discount),2) AS 'discount_amount' 
+
+from orders o 
+JOIN order_details od ON o.order_id = od.order_id
+JOIN products p ON od.product_id = p.product_id
+
+group by YEAR(o.order_date)
+order by order_year desc;

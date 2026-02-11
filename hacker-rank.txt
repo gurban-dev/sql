@@ -1,0 +1,66 @@
+Practice problems:
+https://www.hackerrank.com/domains/sql
+
+----------------------------------------------------------------
+Query the list of CITY names from STATION that do not start
+with vowels. Your result cannot contain duplicates.
+
+SELECT DISTINCT CITY
+FROM STATION
+WHERE NOT (
+  CITY LIKE 'A%' OR CITY LIKE 'E%' OR CITY LIKE 'I%' OR CITY LIKE 'O%' OR CITY LIKE 'U%' OR
+  CITY LIKE 'a%' OR CITY LIKE 'e%' OR CITY LIKE 'i%' OR CITY LIKE 'o%' OR CITY LIKE 'u%'
+);
+
+----------------------------------------------------------------
+Julia just finished conducting a coding contest, and she needs
+your help assembling the leaderboard! Write a query to print the
+respective hacker_id and name of hackers who achieved full scores
+for more than one challenge. Order your output in descending order
+by the total number of challenges in which the hacker earned a full
+score. If more than one hacker received full scores in same number
+of challenges, then sort them by ascending hacker_id.
+
+-- Choose the columns to show in the final result:
+-- the hacker's unique id and their name.
+SELECT
+  H.hacker_id,
+  H.name
+FROM
+  Hackers H
+JOIN
+  -- Link each hacker to every submission they made so we
+  -- can inspect the scores they achieved.
+  Submissions S ON H.hacker_id = S.hacker_id
+JOIN
+  -- This ties each submission to the challenge it refers to.
+  Challenges C ON S.challenge_id = C.challenge_id
+JOIN
+  -- Join to the Difficulty table (aliased D) to obtain the maximum
+  -- possible score associated with that difficulty level.
+  Difficulty D ON C.difficulty_level = D.difficulty_level
+WHERE
+  -- Filter submissions where the achieved score equals the maximum
+  -- possible score.
+  S.score = D.score
+-- Aggregate results per hacker. After grouping, aggregate functions
+-- (like COUNT) will compute values per hacker.
+GROUP BY
+  H.hacker_id,
+  H.name
+
+-- HAVING filters groups (hackers) after aggregation. Here we count
+-- how many distinct challenges each hacker earned a full score on.
+-- DISTINCT ensures multiple full-score submissions for the same
+-- challenge are counted only once. The condition > 1 keeps only
+-- hackers who achieved full scores in more than one distinct challenge.
+HAVING
+  -- Filter for hackers who have full scores in MORE THAN ONE distinct challenge
+  COUNT(DISTINCT S.challenge_id) > 1
+
+-- Sort the final rows first by the number of distinct full-score
+-- challenges (highest first). If two hackers tied on that count,
+-- order them by hacker_id in ascending order as the tiebreaker.
+ORDER BY
+  COUNT(DISTINCT S.challenge_id) DESC,
+  H.hacker_id ASC;
