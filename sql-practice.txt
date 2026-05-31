@@ -204,28 +204,25 @@ SELECT
     'Doctor' AS role
 FROM doctors;
 
-Why `UNION ALL` is treated as correct, but `UNION` is not:
+Why UNION ALL is treated as correct, but UNION is not:
 
 The exercise says:
-
-> Show every person that is either a patient or a doctor.
+Show every person that is either a patient or a doctor.
 
 The word "every" suggests:
+Take all rows from the patients table and all rows from the
+doctors table.
 
-> Take all rows from the `patients` table and all rows from the
-`doctors` table.
+That is exactly the behavior of UNION ALL.
 
-That is exactly the behavior of `UNION ALL`.
-
-`UNION` performs an additional operation:
-
-> Remove duplicate rows.
+UNION performs an additional operation:
+Remove duplicate rows.
 
 The exercise does not ask for duplicate removal. It only asks to
 return every patient and every doctor.
 
-Therefore, `UNION ALL` more closely matches the stated requirement,
-while `UNION` introduces behavior that was not requested.
+Therefore, UNION ALL more closely matches the stated requirement,
+while UNION introduces behaviour that was not requested.
 
 ----------------------------------------------------------------
 Show the first name and last name of patients with a weight in the
